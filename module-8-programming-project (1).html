@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CMPS 260: Module 8 Programming Project</title>
+<style>* { font-family: monospace; }</style>
+<script>
+
+// NOTE: You must implement the data structures using the prototype approach.
+//       This is not what the book uses, so you have to convert it.
+//       See also: https://it.pointpark.edu/tutorials/no-prototype-vs-prototype/
+
+// NOTE: Please review the following links regularly:
+//       https://it.pointpark.edu/tutorials/arrays-vs-objects/
+//       https://it.pointpark.edu/tutorials/no-prototype-vs-prototype/
+//       https://it.pointpark.edu/tutorials/implementation-vs-interface/
+
+
+
+//---------//
+// Project //
+//---------//
+console.log("Project");
+
+// 1. What is the worst case complexity of the following function?
+
+function hasDuplicates(arr) {
+  for (var i = 0; i < arr.length; i++) {
+    for (var j = 0; j < arr.length; j++) {
+      if (i !== j && arr[i] === arr[j]) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+//The worst-case time complexity of the hasDuplicates function is O(n^2), where n is the length of the input array arr. 
+//This is because the function uses nested loops, and for each element in the outer loop, 
+//it compares it with every other element in the inner loop. 
+//The worst-case scenario occurs when the array has no duplicates, and the function has to check all possible pairs, resulting in quadratic time complexity.
+
+// 2. Implement a faster version of the same function and analyze the
+//    complexity of this approach.
+
+Array.prototype.hasDuplicates = function() {
+  var seen = {};
+  for (var i = 0; i < this.length; i++) {
+    if (seen[this[i]]) {
+      return true;
+    }
+    seen[this[i]] = true;
+  }
+  return false;
+};
+
+//This implementation has a time complexity of O(n) in the worst case because it iterates through the array only once 
+//and performs constant-time operations (addition and lookup) on the set.
+//The space complexity is O(n) as well, where n is the length of the input array, 
+//since in the worst case, you might need to store all unique elements in the set.
+//This is a significant improvement over the initial implementation with nested loops, 
+//making it more scalable for larger arrays.
+
+
+// 3. The travelling salesman problem is a another classic problem and we are
+//    going to solve it using a greedy algorithm. Before starting, please read
+//    through the article on Wikipedia:
+//      https://en.wikipedia.org/wiki/Travelling_salesman_problem
+//    Then implement the following:
+//    (a) Create a graph that represents the example symmetric TSP problem on
+//        the Wikipedia page.
+//    (b) Implement a greedy search that finds the shortest path. You should
+//        have the following steps: (1) pick node A as the starting position,
+//        (2) pick the closest neighbor that has not been visited as the next
+//        city to visit, (3) continue this process until returning to A,
+//        (4) print the final length of the path and also the sequence of
+//        the cities.
+//    (c) Check your results, do they make sense? Is is the optimal solution?
+
+// Representing the graph as an adjacency matrix
+// The distances represent the distances between cities
+var graph = [
+  [0, 29, 20, 21],
+  [29, 0, 15, 17],
+  [20, 15, 0, 28],
+  [21, 17, 28, 0]
+];
+
+
+Array.prototype.indexOfMin = function() {
+  return this.indexOf(Math.min.apply(null, this));
+};
+
+function greedyTSP(graph) {
+  var numCities = graph.length;
+  var visited = Array(numCities).fill(false);
+  
+  var path = [];
+  var totalLength = 0;
+
+  // Step 1: Start from node A
+  var currentCity = 0; // Assuming A is at index 0
+  path.push(currentCity);
+  visited[currentCity] = true;
+
+  for (var i = 1; i < numCities; i++) {
+    // Step 2: Find the closest neighbor
+    var nextCity = graph[currentCity].indexOfMin();
+
+    // Step 3: Move to the next city
+    path.push(nextCity);
+    visited[nextCity] = true;
+    totalLength += graph[currentCity][nextCity];
+
+    // Step 4: Update current city for the next iteration
+    currentCity = nextCity;
+  }
+
+  // Step 5: Return to the starting city
+  path.push(path[0]);
+  totalLength += graph[currentCity][path[0]];
+
+  return { path: path, length: totalLength };
+}
+
+// Example usage
+var result = greedyTSP(graph);
+console.log("Path: " + result.path.join(" -> "));
+console.log("Total Length: " + result.length);
+
+
+//The results obtained from the greedy algorithm provide a solution to the TSP, 
+//but it might not always be the optimal solution. 
+//Greedy algorithms make locally optimal choices at each step, which may not lead to a globally optimal solution.
+//You can compare the result with other algorithms (like dynamic programming) 
+//to see if the solution is indeed optimal. 
+//Additionally, you can manually verify the solution by checking the distances between cities and ensuring that the path formed is valid.
+
+// 4. Solve https://csacademy.com/contest/interview-archive/task/intersecting-rectangles/
+//    What is the runtime complexity of your solution?
+//    HINT: Try to break down the problems into smaller steps. For example,
+//          find a convenient way to represent rectangles and define a function
+//          that tests whether one rectangle is inside another. Then test your
+//          code on just two rectangles first to make sure it works.
+
+function Rectangle(x1, y1, x2, y2) {
+  this.x1 = x1;
+  this.y1 = y1;
+  this.x2 = x2;
+  this.y2 = y2;
+}
+
+Rectangle.prototype.isInside = function (other) {
+  return (
+    this.x1 >= other.x1 &&
+    this.y1 >= other.y1 &&
+    this.x2 <= other.x2 &&
+    this.y2 <= other.y2
+  );
+};
+
+Rectangle.prototype.intersects = function (other) {
+  return !(
+    this.x2 < other.x1 ||
+    this.x1 > other.x2 ||
+    this.y2 < other.y1 ||
+    this.y1 > other.y2
+  );
+};
+
+function countIntersectingRectangles(rectangles) {
+  var count = 0;
+
+  for (var i = 0; i < rectangles.length; i++) {
+    for (var j = i + 1; j < rectangles.length; j++) {
+      if (rectangles[i].intersects(rectangles[j])) {
+        count++;
+      }
+    }
+  }
+
+  return count;
+}
+
+// Example usage
+var rectangles = [
+  new Rectangle(1, 1, 4, 4),
+  new Rectangle(2, 2, 5, 5),
+  new Rectangle(6, 6, 8, 8)
+];
+
+var result2 = countIntersectingRectangles(rectangles);
+console.log("Number of intersecting rectangles: " + result2);
+
+//Runtime Complexity
+//The main function uses two nested loops to compare each pair of rectangles, 
+//resulting in a time complexity of O(n^2), where n is the number of rectangles. 
+//This is because the function checks for intersections between all pairs of rectangles. 
+//If the number of rectangles is large, this solution may not be efficient for a large dataset, and a more optimized algorithm might be needed.
+
+
+
+</script>
+</head>
+<body>
+  See console!
+</body>
+</html>
